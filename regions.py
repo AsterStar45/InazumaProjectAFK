@@ -23,14 +23,15 @@ REGIONES = [
     
     {
         "nombre": "Comenzar 2da Parte",
-        "region": (1568, 960, 300, 80),
-        "palabras": ["COM", "PART", "SIG"],
+        "region": (1568, 960, 200, 70),
+        "palabras": ["COM", "SIG", "FIN"],
         "repetir_texto": True,
         "min_match": 1,            
         "tecla": "enter",
         "cooldown": 0.1,
-        "psm": 7,
+        "psm": 6,
         "lang": "eng"
+        
     },
 
     {
@@ -61,8 +62,8 @@ REGIONES = [
 
     {
         "nombre": "Saque de Centro",
-        "region": (810, 890, 300, 90),
-        "palabras": ["SAQUE", "CENTRO"],
+        "region": (980, 890, 140, 90),
+        "palabras": ["CENT"],
         "min_match": 1,
         "click": True,
         "click_pos": "center",
@@ -77,9 +78,13 @@ REGIONES = [
     {
         "nombre": "Equipo rival",
         "region": (880, 340, 180, 40),
-        "palabras": ["ZAN", "DOM"],
+        "palabras": ["LUZ", "ETE"],
         "min_match": 1,          
-        "tecla": "enter",
+        "repetir_texto": False,
+        "click": True,
+        "click_pos": (950, 515),
+        "click_tipo": "left",
+        "click_delay": 0.1,
         "cooldown": 0.1,
         "psm": 7,
         "lang": "eng"
@@ -94,8 +99,8 @@ REGIONES = [
         "click": True,
         "click_pos": (415, 780),
         "click_tipo": "left",
-        "click_delay": 0.1,
-        "cooldown": 0.1,
+        "click_delay": 0.5,
+        "cooldown": 0.5,
         "psm": 7,
         "lang": "eng"
     },        

@@ -61,6 +61,7 @@ while True:
         frame = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         gray = cv2.threshold(gray, 160, 255, cv2.THRESH_BINARY)[1]
 
@@ -76,7 +77,7 @@ while True:
 
         cv2.imshow(r["nombre"], gray)
         cv2.waitKey(1)
-        print(f"[DEBUG] Region: {r['nombre']} | Texto detectado: '{texto}'")
+        #print(f"[DEBUG] Region: {r['nombre']} | Texto detectado: '{texto}'")
         
         # =========================
         # SAQUE DE CENTRO / REANUDAR
