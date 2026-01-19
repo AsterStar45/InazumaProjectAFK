@@ -19,6 +19,17 @@ REGIONES = [
         "psm": 7,
         "lang": "eng"
     },
+
+    {
+        "nombre": "Todo listo",
+        "region": (0.7333, 0.8343, 0.0781, 0.0741),
+        "palabras": ["LISTO"],
+        "repetir_texto": False,
+        "tecla": "e",
+        "cooldown": 0.1,
+        "psm": 7,
+        "lang": "eng"
+    },    
     
     {
         "nombre": "Comenzar 2da Parte",
@@ -40,7 +51,7 @@ REGIONES = [
         "repetir_texto": True,
         "tecla": "enter",
         "cooldown": 0.1,
-        "psm": 7,
+        "psm": 6,
         "lang": "eng"
     },
 
@@ -61,9 +72,8 @@ REGIONES = [
     {
         "nombre": "Saque de Centro",
         "region": (0.510, 0.824, 0.073, 0.083),
-        "palabras": ["CENT"],
+        "palabras": ["CENTRO"],
         "repetir_texto": False,
-        "min_match": 1,
         "click": True,
         "click_pos": "center",
         "click_tipo": "left",
@@ -72,6 +82,20 @@ REGIONES = [
         "psm": 7,
         "lang": "eng"
     },
+
+    {
+        "nombre": "Reanudar",
+        "region": (0.510, 0.824, 0.073, 0.083),
+        "palabras": ["IDAR"],
+        "repetir_texto": True,
+        "click": True,
+        "click_pos": "center",
+        "click_tipo": "left",
+        "click_delay": 0.1,
+        "cooldown": 0.1,
+        "psm": 6,
+        "lang": "eng"
+    },    
 
     {
         "nombre": "Equipo rival",

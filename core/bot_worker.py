@@ -4,7 +4,6 @@ import pytesseract
 import cv2
 import numpy as np
 import time
-import keyboard
 import re
 
 from core.regions import REGIONES
@@ -18,7 +17,6 @@ class BotWorker(QThread):
     def __init__(self):
         super().__init__()
         self.running = True
-
         self.ultimo_texto = {}
 
         # Estado Saque de Centro
@@ -30,14 +28,31 @@ class BotWorker(QThread):
     def stop(self):
         self.running = False
 
-    def obtener_pos_click(self, region, click_pos):
-        x, y, w, h = self.region_px(region)
+    # =========================
+    # CONVERSIONES CORRECTAS
+    # =========================
+
+    def region_px(self, region, fw, fh):
+        x, y, w, h = region
+        return (
+            int(x * fw),
+            int(y * fh),
+            int(w * fw),
+            int(h * fh),
+        )
+
+    def punto_px(self, punto, fw, fh):
+        x, y = punto
+        return int(x * fw), int(y * fh)
+
+    def obtener_pos_click(self, region, click_pos, fw, fh):
+        x, y, w, h = self.region_px(region, fw, fh)
 
         if click_pos == "center":
             return x + w // 2, y + h // 2
 
         if isinstance(click_pos, tuple):
-            return self.punto_px(click_pos)
+            return self.punto_px(click_pos, fw, fh)
 
         return None
 
@@ -46,39 +61,33 @@ class BotWorker(QThread):
             return True
         return texto != self.ultimo_texto.get(nombre)
 
-    def region_px(self, region):
-        sw, sh = pyautogui.size()
-        x, y, w, h = region
-        return (
-            int(x * sw),
-            int(y * sh),
-            int(w * sw),
-            int(h * sh),
-        )
-
-
-    def punto_px(self, punto):
-        sw, sh = pyautogui.size()
-        x, y = punto
-        return int(x * sw), int(y * sh)
+    # =========================
+    # THREAD PRINCIPAL
+    # =========================
 
     def run(self):
         self.log.emit("BOT INICIADO")
 
         while self.running:
+            # UNA SOLA CAPTURA
+            screenshot = pyautogui.screenshot()
+            frame = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+            fh, fw = frame.shape[:2]
+
             for r in REGIONES:
-                x, y, w, h = self.region_px(r["region"])
-                screenshot = pyautogui.screenshot(region=(x, y, w, h))
+                x, y, w, h = self.region_px(r["region"], fw, fh)
+                roi = frame[y:y+h, x:x+w]
 
-                frame = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+                if roi.size == 0:
+                    continue
 
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
                 gray = cv2.GaussianBlur(gray, (5, 5), 0)
                 gray = cv2.threshold(gray, 160, 255, cv2.THRESH_BINARY)[1]
 
                 texto = pytesseract.image_to_string(
                     gray,
-                    config=f"--psm {r.get('psm',7)}",
+                    config=f"--psm {r.get('psm', 7)}",
                     lang=r.get("lang", "eng")
                 )
 
@@ -91,11 +100,11 @@ class BotWorker(QThread):
                 # =========================
                 if r["nombre"] == "Saque de Centro":
                     ahora = time.time()
-                    detecta_saque = ("SAQUE" in texto) or ("CENTRO" in texto)
+                    detecta_saque = "SAQUE" in texto or "CENTRO" in texto
                     detecta_reanudar = "REANUDAR" in texto
 
                     if detecta_reanudar:
-                        pos = self.obtener_pos_click(r["region"], r.get("click_pos"))
+                        pos = self.obtener_pos_click(r["region"], r.get("click_pos"), fw, fh)
                         if pos:
                             pyautogui.click(*pos)
                             self.log.emit("CLICK REANUDAR")
@@ -108,23 +117,23 @@ class BotWorker(QThread):
 
                     if self.saque_estado_activo:
                         if not self.saque_click_hecho:
-                            pos = self.obtener_pos_click(r["region"], r.get("click_pos"))
+                            pos = self.obtener_pos_click(r["region"], r.get("click_pos"), fw, fh)
                             if pos:
                                 pyautogui.click(*pos)
                                 self.log.emit("CLICK SAQUE")
                             self.saque_click_hecho = True
 
-                        if not self.saque_tecla_hecha:
-                            if ahora - self.saque_detectado_en >= 1:
-                                pyautogui.press("u")
-                                self.log.emit("TECLA U")
-                                self.saque_tecla_hecha = True
+                        if not self.saque_tecla_hecha and ahora - self.saque_detectado_en >= 1:
+                            pyautogui.press("u")
+                            self.log.emit("TECLA U")
+                            self.saque_tecla_hecha = True
 
                         if self.saque_click_hecho and self.saque_tecla_hecha:
                             self.saque_estado_activo = False
                             self.saque_click_hecho = False
                             self.saque_tecla_hecha = False
                             self.saque_detectado_en = None
+
                     continue
 
                 # =========================
@@ -145,7 +154,7 @@ class BotWorker(QThread):
                     self.log.emit(f"ACCION: {r['nombre']}")
 
                     if r.get("click"):
-                        pos = self.obtener_pos_click(r["region"], r.get("click_pos"))
+                        pos = self.obtener_pos_click(r["region"], r.get("click_pos"), fw, fh)
                         if pos:
                             pyautogui.click(*pos)
 
