@@ -25,8 +25,22 @@ class BotWorker(QThread):
         self.saque_click_hecho = False
         self.saque_tecla_hecha = False
 
+        # Estado Siguiente / Finalizar
+        self.sig_estado_activo = False
+        self.sig_detectado_en = None
+        self.sig_enter_1 = False
+        self.sig_enter_2 = False
+        self.sig_enter_3 = False
+
+        # Estado modo Online
+        self.modo_online = False
+
     def stop(self):
         self.running = False
+
+    def set_modo_online(self, estado: bool):
+        self.modo_online = estado
+        self.log.emit(f"MODO ONLINE: {'ON' if estado else 'OFF'}")
 
     # =========================
     # CONVERSIONES CORRECTAS
@@ -135,6 +149,51 @@ class BotWorker(QThread):
                             self.saque_detectado_en = None
 
                     continue
+
+                # =========================
+                # SIGUIENTE / FINALIZAR (DOMINANTE)
+                # =========================
+                if r["nombre"] == "Siguiente / Finalizar" and self.modo_online:
+                    ahora = time.time()
+                    detecta_sig = any(p in texto for p in r["palabras"])
+
+                    # DETECCION
+                    if detecta_sig and not self.sig_estado_activo:
+                        self.sig_estado_activo = True
+                        self.sig_detectado_en = ahora
+
+                        self.sig_enter_1 = False
+                        self.sig_enter_2 = False
+                        self.sig_enter_3 = False
+
+                        self.log.emit("SIGUIENTE / FINALIZAR DETECTADO")
+
+                    if self.sig_estado_activo:
+                        # ENTER 1 INMEDIATO
+                        if not self.sig_enter_1:
+                            pyautogui.press("enter")
+                            self.log.emit("ENTER 1 (inmediato)")
+                            self.sig_enter_1 = True
+
+                        # ENTER 2 a los 2 segundos
+                        elif not self.sig_enter_2 and ahora - self.sig_detectado_en >= 1:
+                            pyautogui.press("enter")
+                            self.log.emit("ENTER 2 (2s)")
+                            self.sig_enter_2 = True
+
+                        # ENTER 3 a los 6 segundos
+                        elif not self.sig_enter_3 and ahora - self.sig_detectado_en >= 1:
+                            pyautogui.press("enter")
+                            self.log.emit("ENTER 3 (6s)")
+                            self.sig_enter_3 = True
+
+                        # FIN
+                        if self.sig_enter_1 and self.sig_enter_2 and self.sig_enter_3:
+                            self.sig_estado_activo = False
+                            self.sig_detectado_en = None
+
+                    continue
+
 
                 # =========================
                 # LOGICA NORMAL

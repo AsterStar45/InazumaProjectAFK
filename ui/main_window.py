@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import (
+    QCheckBox,
     QMainWindow,
     QWidget,
     QVBoxLayout,
@@ -77,6 +78,19 @@ class MainWindow(QMainWindow):
         main_layout.addLayout(btn_layout)
 
         # =========================
+        # MODO ONLINE
+        # =========================
+        online_layout = QHBoxLayout()
+
+        self.online_checkbox = QCheckBox("Online")
+        self.online_checkbox.setChecked(False)
+
+        online_layout.addWidget(self.online_checkbox)
+        online_layout.addStretch()
+
+        main_layout.addLayout(online_layout)
+
+        # =========================
         # LOG
         # =========================
         self.log_box = QTextEdit()
@@ -110,6 +124,13 @@ class MainWindow(QMainWindow):
         if self.bot is None or not self.bot.isRunning():
             self.bot = BotWorker()
             self.bot.log.connect(self.add_log)
+
+            # Conectar checkbox Online
+            self.online_checkbox.toggled.connect(self.bot.set_modo_online)
+
+            # Estado inicial
+            self.bot.set_modo_online(self.online_checkbox.isChecked())
+
             self.bot.start()
 
             self.start_btn.setEnabled(False)
@@ -117,6 +138,7 @@ class MainWindow(QMainWindow):
 
     def stop_bot(self):
         if self.bot:
+            self.online_checkbox.toggled.disconnect()
             self.bot.stop()
             self.bot.wait()
 
